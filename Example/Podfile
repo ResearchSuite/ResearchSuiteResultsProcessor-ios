@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'ResearchSuiteResultsProcessor_Example' do
+  pod 'ResearchSuiteResultsProcessor', :path => '../'
+
+  target 'ResearchSuiteResultsProcessor_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
