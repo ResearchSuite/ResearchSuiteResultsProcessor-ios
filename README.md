@@ -22,8 +22,8 @@ pod "ResearchSuiteResultsProcessor"
 
 ## Author
 
-jdkizer9, james.kizer@gmail.com
+James Kizer @ Cornell Tech Foundry
 
 ## License
 
-ResearchSuiteResultsProcessor is available under the MIT license. See the LICENSE file for more info.
+ResearchSuiteTaskBuilder is available under the Apache 2.0 license. See the LICENSE file for more info.
