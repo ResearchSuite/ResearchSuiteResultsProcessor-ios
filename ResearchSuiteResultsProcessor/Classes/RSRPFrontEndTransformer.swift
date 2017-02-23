@@ -10,6 +10,11 @@ import UIKit
 import ResearchKit
 
 public protocol RSRPFrontEndTransformer {
-    static func transform(parameters: [String: ORKStepResult]) -> RSRPIntermediateResult?
+    static func transform(
+        taskIdentifier: String,
+        taskRunUUID: UUID,
+        parameters: [String: ORKStepResult]
+    ) -> RSRPIntermediateResult?
+    
     static func supportsType(type: String) -> Bool
 }

@@ -30,7 +30,12 @@ class RSRPFrontEndService: NSObject {
                 
             })
             
-            return self.transformResult(type: resultTransform.transform, parameters: selectedResults)
+            return self.transformResult(
+                type: resultTransform.transform,
+                taskIdentifier: taskResult.identifier,
+                taskRunUUID: taskResult.taskRunUUID,
+                parameters: selectedResults
+            )
         }
         
         
@@ -39,11 +44,16 @@ class RSRPFrontEndService: NSObject {
     }
     
     
-    private func transformResult(type: String, parameters: [String: ORKStepResult]) -> RSRPIntermediateResult? {
+    private func transformResult(
+        type: String,
+        taskIdentifier: String,
+        taskRunUUID: UUID,
+        parameters: [String: ORKStepResult]
+    ) -> RSRPIntermediateResult? {
         
         for transformer in self.transformers {
             if transformer.supportsType(type: type),
-                let intermediateResult = transformer.transform(parameters: parameters) {
+                let intermediateResult = transformer.transform(taskIdentifier: taskIdentifier, taskRunUUID: taskRunUUID, parameters: parameters) {
                 return intermediateResult
             }
         }
