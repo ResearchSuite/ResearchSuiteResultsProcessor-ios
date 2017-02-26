@@ -13,7 +13,7 @@ public protocol RSRPFrontEndTransformer {
     static func transform(
         taskIdentifier: String,
         taskRunUUID: UUID,
-        parameters: [String: ORKStepResult]
+        parameters: [String: AnyObject]
     ) -> RSRPIntermediateResult?
     
     static func supportsType(type: String) -> Bool

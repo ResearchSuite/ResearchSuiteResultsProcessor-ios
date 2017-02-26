@@ -9,19 +9,36 @@
 import UIKit
 import Gloss
 
+public enum RSRPResultTransformInputMappingType {
+    case stepIdentifier
+    case constant
+}
+
 public class RSRPResultTransformInputMapping: Decodable {
     
-    public let stepIdentifier: String!
-    public let parameter: String!
+    public let mappingType: RSRPResultTransformInputMappingType
+    public let value: AnyObject
+    public let parameter: String
     
     required public init?(json: JSON) {
         
-        guard let stepIdentifier: String = "stepIdentifier" <~~ json,
-            let parameter: String = "parameter" <~~ json else {
+        guard let parameter: String = "parameter" <~~ json else {
                 return nil
         }
-        self.stepIdentifier = stepIdentifier
+        
         self.parameter = parameter
+        
+        if let stepIdentifier: String = "stepIdentifier" <~~ json {
+            self.mappingType = .stepIdentifier
+            self.value = stepIdentifier as AnyObject
+        }
+        else if let value: AnyObject = "constant" <~~ json {
+            self.mappingType = .constant
+            self.value = value
+        }
+        else {
+            return nil
+        }
         
     }
 

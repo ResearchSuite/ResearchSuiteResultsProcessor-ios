@@ -21,11 +21,21 @@ class RSRPFrontEndService: NSObject {
         
         let intermediateResults = resultTransforms.flatMap { (resultTransform) -> RSRPIntermediateResult? in
             
-            var selectedResults: [String: ORKStepResult] = [:]
+            var parameters: [String: AnyObject] = [:]
             resultTransform.inputMapping.forEach({ (inputMapping) in
                 
-                if let result = taskResult.stepResult(forStepIdentifier: inputMapping.stepIdentifier) {
-                    selectedResults[inputMapping.parameter] = result
+                switch inputMapping.mappingType {
+                case .stepIdentifier:
+                    if let stepIdentifier = inputMapping.value as? String,
+                        let result = taskResult.stepResult(forStepIdentifier: stepIdentifier) {
+                        parameters[inputMapping.parameter] = result
+                    }
+                
+                case .constant:
+                    parameters[inputMapping.parameter] = inputMapping.value
+                
+                default:
+                    break
                 }
                 
             })
@@ -34,7 +44,7 @@ class RSRPFrontEndService: NSObject {
                 type: resultTransform.transform,
                 taskIdentifier: taskResult.identifier,
                 taskRunUUID: taskResult.taskRunUUID,
-                parameters: selectedResults
+                parameters: parameters
             )
         }
         
@@ -48,7 +58,7 @@ class RSRPFrontEndService: NSObject {
         type: String,
         taskIdentifier: String,
         taskRunUUID: UUID,
-        parameters: [String: ORKStepResult]
+        parameters: [String: AnyObject]
     ) -> RSRPIntermediateResult? {
         
         for transformer in self.transformers {
