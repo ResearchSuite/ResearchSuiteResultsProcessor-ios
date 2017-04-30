@@ -6,6 +6,6 @@ target 'ResearchSuiteResultsProcessor_Example' do
   target 'ResearchSuiteResultsProcessor_Tests' do
     inherit! :search_paths
 
-    
+
   end
 end

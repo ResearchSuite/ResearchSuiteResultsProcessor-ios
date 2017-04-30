@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ResearchSuiteResultsProcessor'
-  s.version          = '0.2.0'
+  s.version          = '0.3.0'
   s.summary          = 'The ResearchSuite Results Processor is an easy and extensible way to process results for ResearchKit.'
 
 # This description is used to generate tags and improve search results.
@@ -31,15 +31,22 @@ Pod::Spec.new do |s|
 
   s.ios.deployment_target = '9.0'
 
-  s.source_files = 'ResearchSuiteResultsProcessor/Classes/**/*'
+  s.subspec 'Core' do |core|
+    core.source_files = 'ResearchSuiteResultsProcessor/Core/Classes/**/*'
+    core.dependency 'ResearchKit', '~> 1.3'
+    core.dependency 'Gloss', '~> 1.1'
+  end
 
-  # s.resource_bundles = {
-  #   'ResearchSuiteResultsProcessor' => ['ResearchSuiteResultsProcessor/Assets/*.png']
-  # }
+  s.subspec 'OMHHelper' do |omh|
+    omh.source_files = 'ResearchSuiteResultsProcessor/OMHHelper/Classes/**/*'
+    omh.dependency 'ResearchSuiteResultsProcessor/Core'
+    omh.dependency 'OMHClient'
+  end
 
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
-  s.dependency 'ResearchKit', '~> 1.3'
-  s.dependency 'Gloss', '~> 1.1'
+  s.subspec 'CSVBackend' do |csv|
+    csv.source_files = 'ResearchSuiteResultsProcessor/CSVBackend/Classes/**/*'
+    csv.dependency 'ResearchSuiteResultsProcessor/Core'
+  end
+
+  s.default_subspec = 'Core'
 end

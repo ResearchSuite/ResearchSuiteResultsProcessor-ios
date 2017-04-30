@@ -12,22 +12,30 @@ import ResearchKit
 public class RSRPResultsProcessor: NSObject {
     
     let frontEnd: RSRPFrontEndService
-    let backEnd: RSRPBackEnd
+    let backEnds: [RSRPBackEnd]
     
+    //keep for backwards compatibility
     public init(frontEndTransformers: [RSRPFrontEndTransformer.Type], backEnd: RSRPBackEnd) {
         self.frontEnd = RSRPFrontEndService(frontEndTransformers: frontEndTransformers)
-        self.backEnd = backEnd
+        self.backEnds = [backEnd]
+        super.init()
+    }
+    
+    public init(frontEndTransformers: [RSRPFrontEndTransformer.Type], backEnds: [RSRPBackEnd]) {
+        self.frontEnd = RSRPFrontEndService(frontEndTransformers: frontEndTransformers)
+        self.backEnds = backEnds
         super.init()
     }
     
     public func processResult(taskResult: ORKTaskResult, resultTransforms: [RSRPResultTransform]) {
         let intermediateResults = self.frontEnd.processResult(taskResult: taskResult, resultTransforms: resultTransforms)
-        intermediateResults.forEach { (intermediateResult) in
-            
-            self.backEnd.add(intermediateResult: intermediateResult)
-            
-            
+        let backEnds = self.backEnds
+        backEnds.forEach { backEnd in
+            intermediateResults.forEach { (intermediateResult) in
+                backEnd.add(intermediateResult: intermediateResult)
+            }
         }
+        
     }
 
 }
