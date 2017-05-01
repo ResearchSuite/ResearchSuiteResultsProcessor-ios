@@ -11,6 +11,7 @@ import Gloss
 
 public enum RSRPResultTransformInputMappingType {
     case stepIdentifier
+    case stepIdentifierRegex
     case constant
 }
 
@@ -35,6 +36,10 @@ public class RSRPResultTransformInputMapping: Decodable {
         else if let value: AnyObject = "constant" <~~ json {
             self.mappingType = .constant
             self.value = value
+        }
+        else if let stepIdentifierRegex: String = "stepIdentifierRegex" <~~ json {
+            self.mappingType = .stepIdentifierRegex
+            self.value = stepIdentifierRegex as AnyObject
         }
         else {
             return nil

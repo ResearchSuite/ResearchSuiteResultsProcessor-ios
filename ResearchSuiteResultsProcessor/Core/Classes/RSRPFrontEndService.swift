@@ -33,6 +33,16 @@ class RSRPFrontEndService: NSObject {
                 
                 case .constant:
                     parameters[inputMapping.parameter] = inputMapping.value
+                    
+                case .stepIdentifierRegex:
+                    if let regex = inputMapping.value as? String,
+                        let stepResults = taskResult.results as? [ORKStepResult] {
+                        let matchingStepResults: [ORKStepResult] = stepResults.filter({ (result) -> Bool in
+                            let identifier: String = result.identifier
+                            return identifier.range(of: regex, options: String.CompareOptions.regularExpression, range: nil, locale: nil) != nil
+                        })
+                        parameters[inputMapping.parameter] = matchingStepResults as AnyObject
+                    }
                 
                 default:
                     break
