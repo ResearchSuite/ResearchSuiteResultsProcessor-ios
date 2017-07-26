@@ -9,7 +9,7 @@
 import UIKit
 import ResearchKit
 
-class RSRPFrontEndService: NSObject {
+public class RSRPFrontEndService: NSObject {
     
     let transformers: [RSRPFrontEndTransformer.Type]
     
@@ -21,41 +21,7 @@ class RSRPFrontEndService: NSObject {
         
         let intermediateResults = resultTransforms.flatMap { (resultTransform) -> RSRPIntermediateResult? in
             
-            var parameters: [String: AnyObject] = [:]
-            resultTransform.inputMapping.forEach({ (inputMapping) in
-                
-                switch inputMapping.mappingType {
-                case .stepIdentifier:
-                    if let stepIdentifier = inputMapping.value as? String,
-                        let result = taskResult.stepResult(forStepIdentifier: stepIdentifier) {
-                        parameters[inputMapping.parameter] = result
-                    }
-                
-                case .constant:
-                    parameters[inputMapping.parameter] = inputMapping.value
-                    
-                case .stepIdentifierRegex:
-                    if let regex = inputMapping.value as? String,
-                        let stepResults = taskResult.results as? [ORKStepResult] {
-                        let matchingStepResults: [ORKStepResult] = stepResults.filter({ (result) -> Bool in
-                            let identifier: String = result.identifier
-                            return identifier.range(of: regex, options: String.CompareOptions.regularExpression, range: nil, locale: nil) != nil
-                        })
-                        parameters[inputMapping.parameter] = matchingStepResults as AnyObject
-                    }
-                
-                default:
-                    break
-                }
-                
-            })
-            
-            return self.transformResult(
-                type: resultTransform.transform,
-                taskIdentifier: taskResult.identifier,
-                taskRunUUID: taskResult.taskRunUUID,
-                parameters: parameters
-            )
+            return RSRPFrontEndService.processResult(taskResult: taskResult, resultTransform: resultTransform, frontEndTransformers: self.transformers)
         }
         
         
@@ -63,15 +29,57 @@ class RSRPFrontEndService: NSObject {
         
     }
     
+    public static func processResult(taskResult: ORKTaskResult, resultTransform: RSRPResultTransform, frontEndTransformers: [RSRPFrontEndTransformer.Type]) -> RSRPIntermediateResult? {
+        
+        var parameters: [String: AnyObject] = [:]
+        resultTransform.inputMapping.forEach({ (inputMapping) in
+            
+            switch inputMapping.mappingType {
+            case .stepIdentifier:
+                if let stepIdentifier = inputMapping.value as? String,
+                    let result = taskResult.stepResult(forStepIdentifier: stepIdentifier) {
+                    parameters[inputMapping.parameter] = result
+                }
+                
+            case .constant:
+                parameters[inputMapping.parameter] = inputMapping.value
+                
+            case .stepIdentifierRegex:
+                if let regex = inputMapping.value as? String,
+                    let stepResults = taskResult.results as? [ORKStepResult] {
+                    let matchingStepResults: [ORKStepResult] = stepResults.filter({ (result) -> Bool in
+                        let identifier: String = result.identifier
+                        return identifier.range(of: regex, options: String.CompareOptions.regularExpression, range: nil, locale: nil) != nil
+                    })
+                    parameters[inputMapping.parameter] = matchingStepResults as AnyObject
+                }
+                
+            default:
+                break
+            }
+            
+        })
+        
+        return RSRPFrontEndService.transformResult(
+            type: resultTransform.transform,
+            taskIdentifier: taskResult.identifier,
+            taskRunUUID: taskResult.taskRunUUID,
+            parameters: parameters,
+            frontEndTransformers: frontEndTransformers
+        )
+        
+    }
     
-    private func transformResult(
+    
+    private static func transformResult(
         type: String,
         taskIdentifier: String,
         taskRunUUID: UUID,
-        parameters: [String: AnyObject]
+        parameters: [String: AnyObject],
+        frontEndTransformers: [RSRPFrontEndTransformer.Type]
     ) -> RSRPIntermediateResult? {
         
-        for transformer in self.transformers {
+        for transformer in frontEndTransformers {
             if transformer.supportsType(type: type),
                 let intermediateResult = transformer.transform(taskIdentifier: taskIdentifier, taskRunUUID: taskRunUUID, parameters: parameters) {
                 return intermediateResult
