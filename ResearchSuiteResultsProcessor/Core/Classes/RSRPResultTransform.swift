@@ -9,7 +9,7 @@
 import UIKit
 import Gloss
 
-open class RSRPResultTransform: Decodable {
+open class RSRPResultTransform: Gloss.Decodable {
     
     public let transform: String!
     public let inputMapping: [RSRPResultTransformInputMapping]!

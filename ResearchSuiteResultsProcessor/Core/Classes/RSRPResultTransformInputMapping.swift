@@ -15,7 +15,7 @@ public enum RSRPResultTransformInputMappingType {
     case constant
 }
 
-public class RSRPResultTransformInputMapping: Decodable {
+public class RSRPResultTransformInputMapping: Gloss.Decodable {
     
     public let mappingType: RSRPResultTransformInputMappingType
     public let value: AnyObject
