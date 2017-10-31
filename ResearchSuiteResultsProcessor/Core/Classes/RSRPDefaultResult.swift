@@ -73,6 +73,25 @@ extension ORKNumericQuestionResult: RSRPDefaultValueTransformer {
 }
 
 //ORKTimeOfDayQuestionResult
+extension ORKTimeOfDayQuestionResult: RSRPDefaultValueTransformer {
+    
+    public var defaultValue: AnyObject? {
+        
+        let calendar = Calendar(identifier: .gregorian)
+        
+        guard let dateComponents = self.dateComponentsAnswer,
+            let date = calendar.date(from: dateComponents) else {
+                return nil
+        }
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
+        let timeString = timeFormatter.string(from: date)
+        
+        return timeString as NSString
+    }
+}
 
 //ORKTimeIntervalQuestionResult
 extension ORKTimeIntervalQuestionResult: RSRPDefaultValueTransformer {
@@ -87,11 +106,29 @@ extension ORKTimeIntervalQuestionResult: RSRPDefaultValueTransformer {
 
 
 //ORKDateQuestionResult
+extension ORKDateQuestionResult: RSRPDefaultValueTransformer {
+    
+    public var defaultValue: AnyObject? {
+        if let answer = self.dateAnswer {
+            return RSRPDefaultResultHelpers.ISO8601Formatter.string(from: answer) as NSString
+        }
+        return nil
+    }
+}
+
 
 //ORKLocationQuestionResult
 
 
 public class RSRPDefaultResultHelpers {
+    
+    public static let ISO8601Formatter: DateFormatter = {
+        var dateFormatter = DateFormatter()
+        let enUSPOSIXLocale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.locale = enUSPOSIXLocale as Locale!
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        return dateFormatter
+    }()
     
     public class func extractResults(parameters: [String : AnyObject]) -> [String: AnyObject]? {
         let resultsPairList: [(String, AnyObject)] = parameters.flatMap { (pair) -> (String, AnyObject)? in
