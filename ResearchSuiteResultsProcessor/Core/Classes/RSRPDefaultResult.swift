@@ -10,6 +10,13 @@ import ResearchKit
 
 public protocol RSRPDefaultValueTransformer {
     var defaultValue: AnyObject? { get }
+    var defaultSerializedValue: AnyObject? { get }
+}
+
+extension RSRPDefaultValueTransformer {
+    public var defaultSerializedValue: AnyObject? {
+        return self.defaultValue
+    }
 }
 
 //default results
@@ -75,21 +82,29 @@ extension ORKNumericQuestionResult: RSRPDefaultValueTransformer {
 //ORKTimeOfDayQuestionResult
 extension ORKTimeOfDayQuestionResult: RSRPDefaultValueTransformer {
     
-    public var defaultValue: AnyObject? {
-        
+    public var defaultSerializedValue: AnyObject? {
+
         let calendar = Calendar(identifier: .gregorian)
-        
+
         guard let dateComponents = self.dateComponentsAnswer,
             let date = calendar.date(from: dateComponents) else {
                 return nil
         }
-        
+
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
-        
+
         let timeString = timeFormatter.string(from: date)
-        
+
         return timeString as NSString
+    }
+    
+    public var defaultValue: AnyObject? {
+        
+        if let answer = self.dateComponentsAnswer {
+            return answer as NSDateComponents
+        }
+        return nil
     }
 }
 
@@ -109,6 +124,13 @@ extension ORKTimeIntervalQuestionResult: RSRPDefaultValueTransformer {
 extension ORKDateQuestionResult: RSRPDefaultValueTransformer {
     
     public var defaultValue: AnyObject? {
+        if let answer = self.dateAnswer {
+            return answer as NSDate
+        }
+        return nil
+    }
+    
+    public var defaultSerializedValue: AnyObject? {
         if let answer = self.dateAnswer {
             return RSRPDefaultResultHelpers.ISO8601Formatter.string(from: answer) as NSString
         }
@@ -130,12 +152,18 @@ public class RSRPDefaultResultHelpers {
         return dateFormatter
     }()
     
-    public class func extractResults(parameters: [String : AnyObject]) -> [String: AnyObject]? {
+    public class func extractResults(parameters: [String : AnyObject], forSerialization: Bool) -> [String: AnyObject]? {
+        
+        let selector: (RSRPDefaultValueTransformer) -> AnyObject? = {
+            if forSerialization { return { $0.defaultSerializedValue } }
+            else { return { $0.defaultValue } }
+        }()
+        
         let resultsPairList: [(String, AnyObject)] = parameters.flatMap { (pair) -> (String, AnyObject)? in
             
             guard let stepResult = pair.value as? ORKStepResult,
                 let firstResult = stepResult.firstResult as? RSRPDefaultValueTransformer,
-                let resultValue: AnyObject = firstResult.defaultValue else {
+                let resultValue: AnyObject = selector(firstResult) else {
                     return nil
             }
             
