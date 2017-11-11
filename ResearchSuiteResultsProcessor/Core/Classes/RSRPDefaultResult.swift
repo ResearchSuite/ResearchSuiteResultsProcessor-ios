@@ -141,6 +141,25 @@ extension ORKDateQuestionResult: RSRPDefaultValueTransformer {
 
 //ORKLocationQuestionResult
 
+//ORKMultipleComponentQuestionResult
+extension ORKMultipleComponentQuestionResult: RSRPDefaultValueTransformer {
+    
+    public var defaultValue: AnyObject? {
+        if let answer = self.componentsAnswer {
+            return answer as AnyObject
+        }
+        return nil
+    }
+    
+//    public var defaultSerializedValue: AnyObject? {
+//        if let answer = self.dateAnswer {
+//            return RSRPDefaultResultHelpers.ISO8601Formatter.string(from: answer) as NSString
+//        }
+//        return nil
+//    }
+    
+}
+
 
 public class RSRPDefaultResultHelpers {
     
