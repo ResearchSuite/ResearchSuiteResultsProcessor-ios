@@ -22,7 +22,7 @@ public class RSRPCSVBackEnd: RSRPBackEnd {
         //see if we need to create the directory
         var isDirectory : ObjCBool = false
         
-        if FileManager.default.fileExists(atPath: outputDirectory.absoluteString, isDirectory: &isDirectory) {
+        if FileManager.default.fileExists(atPath: outputDirectory.path, isDirectory: &isDirectory) {
             
             //if a file, remove file and add directory
             if isDirectory.boolValue {
@@ -74,6 +74,18 @@ public class RSRPCSVBackEnd: RSRPBackEnd {
         }
     }
     
+    public func removeFileForType(type: CSVEncodable.Type) {
+        let typeIdentifier = type.typeString
+        let fileURL = self.outputDirectory.appendingPathComponent(typeIdentifier + ".csv")
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            do {
+                try FileManager.default.removeItem(at: fileURL)
+            } catch let error as NSError {
+                debugPrint(error)
+            }
+        }
+    }
+    
     public func removeAll() throws {
         
         //remove directory and recreate
@@ -118,7 +130,7 @@ public class RSRPCSVBackEnd: RSRPBackEnd {
         
     }
     
-    public func getFiles() -> [URL]? {
+    public func getFileURLs() -> [URL]? {
         do {
             return try FileManager.default.contentsOfDirectory(at: self.outputDirectory, includingPropertiesForKeys: nil)
         } catch let error as NSError {
@@ -126,13 +138,116 @@ public class RSRPCSVBackEnd: RSRPBackEnd {
         }
     }
     
+    public func getFileURLForType(type: CSVConvertible.Type) -> URL? {
+        
+        let typeIdentifier = type.typeString
+        let fileURL = self.outputDirectory.appendingPathComponent(typeIdentifier + ".csv")
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+        else {
+            return nil
+        }
+        
+    }
+    
+    private func getOrCreateFileForType(type: CSVConvertible.Type) throws -> FileHandle {
+        
+        let typeIdentifier = type.typeString
+        let fileURL = self.outputDirectory.appendingPathComponent(typeIdentifier + ".csv")
+        //file exists, load file handle
+        
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            return try FileHandle(forWritingTo: fileURL)
+        }
+        else {
+            debugPrint(fileURL)
+            let fileCreated = FileManager.default.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
+            guard fileCreated,
+                FileManager.default.fileExists(atPath: fileURL.path) else {
+                assertionFailure("failed to create file")
+                throw NSError(domain: "RSRPCSVBackEnd", code: 0, userInfo: nil)
+            }
+            
+            let fileHandle = try FileHandle(forWritingTo: fileURL)
+            
+            //write header to file
+            guard let data: Data = type.header.appending("\n").data(using: .utf8) else {
+                assertionFailure("failed to convert header to data")
+                throw NSError(domain: "RSRPCSVBackEnd", code: 0, userInfo: nil)
+            }
+            fileHandle.write(data)
+            return fileHandle
+        }
+        
+    }
+    
+    public func getRecordsOfType<T: CSVDecodable>(type: T.Type) throws -> [T] {
+        guard let fileURL = self.getFileURLForType(type: type) else {
+            return []
+        }
+        
+        let fileString = try String(contentsOf: fileURL, encoding: .utf8)
+        let lines = fileString.components(separatedBy: .newlines)
+        
+        return lines.flatMap({ (record) -> T? in
+            return T(record: record)
+        })
+    }
+    
+    public func add<T: CSVEncodable>(csvRecords: [T]) throws {
+        
+        guard let first = csvRecords.first else {
+            return
+        }
+        
+        let type: CSVEncodable.Type = type(of: first)
+        
+        let lines = csvRecords.flatMap { $0.toRecords() }
+        if lines.count == 0 {
+            return
+        }
+        
+        let fileHandle = try self.getOrCreateFileForType(type: type)
+        fileHandle.seekToEndOfFile()
+        
+        guard let data: Data = lines.joined(separator: "\n").data(using: .utf8) else {
+            assertionFailure("failed to convert records to data")
+            throw NSError(domain: "RSRPCSVBackEnd", code: 1, userInfo: nil)
+        }
+        fileHandle.write(data)
+        fileHandle.closeFile()
+        
+    }
+    
+    public func add(encodable: CSVEncodable) throws {
+        
+        let type: CSVEncodable.Type = type(of: encodable)
+        
+        let records = encodable.toRecords()
+        if records.count == 0 {
+            return
+        }
+        
+        let fileHandle = try self.getOrCreateFileForType(type: type)
+        fileHandle.seekToEndOfFile()
+        
+        guard let data: Data = records.joined(separator: "\n").appending("\n").data(using: .utf8) else {
+            assertionFailure("failed to convert records to data")
+            throw NSError(domain: "RSRPCSVBackEnd", code: 1, userInfo: nil)
+        }
+        fileHandle.write(data)
+        fileHandle.closeFile()
+        
+    }
+    
     public func add(intermediateResult: RSRPIntermediateResult) {
         
-        if let builder = intermediateResult as? RSRPCSVDatapointBuilder {
+        if let datapoint = intermediateResult as? CSVEncodable {
             
-            let datapoint: RSRPCSVDatapoint = builder.toDatapoint()
             do {
-                try self.addFile(itemName: datapoint.identifier + ".csv", text: datapoint.toString())
+                //note that this may not always work in the background
+                try self.add(encodable: datapoint)
             }
             catch let error as NSError {
                 print(error)
