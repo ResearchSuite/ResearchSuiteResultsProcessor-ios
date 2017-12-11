@@ -46,6 +46,7 @@ Pod::Spec.new do |s|
   s.subspec 'CSVBackend' do |csv|
     csv.source_files = 'ResearchSuiteResultsProcessor/CSVBackend/Classes/**/*'
     csv.dependency 'ResearchSuiteResultsProcessor/Core'
+    csv.dependency 'SecureQueue'
   end
 
   s.default_subspec = 'Core'
