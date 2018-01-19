@@ -7,6 +7,8 @@
 
 import UIKit
 import ResearchKit
+import CoreLocation
+import Gloss
 
 public protocol RSRPDefaultValueTransformer {
     var defaultValue: AnyObject? { get }
@@ -32,6 +34,12 @@ extension ORKScaleQuestionResult: RSRPDefaultValueTransformer {
     }
 }
 
+extension ORKTextChoice: RSRPDefaultValueTransformer {
+    public var defaultValue: AnyObject? {
+        return self.value
+    }
+}
+
 extension ORKChoiceQuestionResult: RSRPDefaultValueTransformer {
     
     public var defaultValue: AnyObject? {
@@ -41,6 +49,30 @@ extension ORKChoiceQuestionResult: RSRPDefaultValueTransformer {
         return nil
     }
     
+    public var defaultSerializedValue: AnyObject? {
+        if let answers = self.choiceAnswers {
+            
+            let mappedAnswers = answers.flatMap({ (answer) -> AnyObject? in
+                
+                if let i = answer as? NSNumber {
+                    return i
+                }
+                else if let s = answer as? NSString {
+                    return s
+                }
+                else if let transformable = answer as? RSRPDefaultValueTransformer {
+                    return transformable.defaultSerializedValue
+                }
+                
+                assertionFailure("answer is not transformable")
+                return answer as? AnyObject
+                
+            })
+            
+            return mappedAnswers as NSArray
+        }
+        return nil
+    }
 }
 
 //ORKBooleanQuestionResult
@@ -140,6 +172,16 @@ extension ORKDateQuestionResult: RSRPDefaultValueTransformer {
 
 
 //ORKLocationQuestionResult
+extension ORKLocationQuestionResult: RSRPDefaultValueTransformer {
+    
+    public var defaultValue: AnyObject? {
+        if let answer = self.locationAnswer {
+            return CLLocation(latitude: answer.coordinate.latitude, longitude: answer.coordinate.longitude)
+        }
+        return nil
+    }
+    
+}
 
 //ORKMultipleComponentQuestionResult
 extension ORKMultipleComponentQuestionResult: RSRPDefaultValueTransformer {
