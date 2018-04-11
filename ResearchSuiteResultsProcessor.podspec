@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ResearchSuiteResultsProcessor'
-  s.version          = '0.9.0'
+  s.version          = '0.9.1'
   s.summary          = 'The ResearchSuite Results Processor is an easy and extensible way to process results for ResearchKit.'
 
 # This description is used to generate tags and improve search results.
@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
   s.subspec 'Core' do |core|
     core.source_files = 'ResearchSuiteResultsProcessor/Core/Classes/**/*'
     core.dependency 'ResearchKit', '~> 1.3'
-    core.dependency 'Gloss', '~> 1.1'
+    core.dependency 'Gloss', '~> 2.0'
   end
 
   s.subspec 'OMHHelper' do |omh|
