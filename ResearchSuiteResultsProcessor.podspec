@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ResearchSuiteResultsProcessor'
-  s.version          = '0.9.1'
+  s.version          = '0.9.2'
   s.summary          = 'The ResearchSuite Results Processor is an easy and extensible way to process results for ResearchKit.'
 
 # This description is used to generate tags and improve search results.
